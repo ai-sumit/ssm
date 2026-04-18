@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Feed</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --fb-bg: #f0f2f5;
+            --fb-blue: #1877f2;
+            --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--fb-bg);
+            margin: 0;
+            padding: 20px;
+            color: #1c1e21;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Create Post Card */
+        .create-post {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 20px;
+        }
+
+        .create-post h4 { margin-top: 0; color: #65676b; font-size: 14px; }
+
+        input, textarea {
+            width: 100%;
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            font-size: 15px;
+            background: #f0f2f5;
+        }
+
+        button.main-btn {
+            background-color: var(--fb-blue);
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 10px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button.main-btn:hover { background-color: #166fe5; }
+
+        /* Feed Post Card */
+        .post-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 16px;
+            overflow: hidden;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .post-header { padding: 12px 16px; display: flex; align-items: center; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #ddd; margin-right: 12px; display:flex; align-items:center; justify-content:center; color: white; background: var(--fb-blue); }
+        .user-info b { display: block; font-size: 15px; }
+        .user-info span { font-size: 12px; color: #65676b; }
+
+        .post-content { padding: 4px 16px 16px 16px; font-size: 16px; line-height: 1.4; }
+
+        /* Action Buttons */
+        .post-actions {
+            border-top: 1px solid #ebedf0;
+            border-bottom: 1px solid #ebedf0;
+            display: flex;
+            padding: 4px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            color: #65676b;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .action-btn:hover { background: #f2f2f2; }
+        .action-btn i { margin-right: 6px; }
+
+        /* Comments Section (Hidden by default) */
+        .comment-section {
+            background: #fff;
+            padding: 12px 16px;
+            display: none; /* Hidden */
+            border-top: 1px solid #ebedf0;
+        }
+
+        .comment-item { margin-bottom: 12px; display: flex; align-items: flex-start; }
+        .comment-bubble {
+            background: #f0f2f5;
+            padding: 8px 12px;
+            border-radius: 18px;
+            font-size: 13px;
+            max-width: 85%;
+        }
+
+        .reply-input-group { display: flex; gap: 8px; margin-top: 10px; }
+        .reply-input-group input { margin-bottom: 0; font-size: 13px; border-radius: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="create-post">
+        <h4><i class="fas fa-edit"></i> Share something with the community</h4>
+        <input type="text" id="qName" placeholder="Your Name">
+        <textarea id="qText" rows="2" placeholder="What's on your mind?"></textarea>
+        <button class="main-btn" onclick="submitData('Queries')">Post</button>
+    </div>
+
+    <div id="feed-area"></div>
+</div>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzD0ckyJb5DOQ_MB0TRsRsCNDZ4skDOeuG_v9AYfeJ4o24KaMcHfl1eSeBVV6A7Lb8I/exec";
+
+    async function loadData() {
+        document.getElementById('feed-area').innerHTML = '<p style="text-align:center">Loading Feed...</p>';
+        try {
+            const res = await fetch(WEB_APP_URL);
+            const data = await res.json();
+            let html = "";
+
+            data.queries.reverse().forEach(q => {
+                const date = new Date(q.Timestamp).toLocaleDateString();
+                html += `
+                <div class="post-card">
+                    <div class="post-header">
+                        <div class="avatar">${q.User.charAt(0).toUpperCase()}</div>
+                        <div class="user-info">
+                            <b>${q.User}</b>
+                            <span>${date}</span>
+                        </div>
+                    </div>
+                    <div class="post-content">${q.Text}</div>
+                    
+                    <div class="post-actions">
+                        <div class="action-btn"><i class="far fa-thumbs-up"></i>Like</div>
+                        <div class="action-btn" onclick="toggleComments('${q.QueryID}')">
+                            <i class="far fa-comment"></i>Comment
+                        </div>
+                        <div class="action-btn"><i class="far fa-share-square"></i>Share</div>
+                    </div>
+
+                    <div class="comment-section" id="section-${q.QueryID}">
+                        <div id="list-${q.QueryID}">
+                            ${renderComments(data.comments, q.QueryID)}
+                        </div>
+                        <div class="reply-input-group">
+                            <input type="text" id="cName-${q.QueryID}" placeholder="Name" style="width:30%">
+                            <input type="text" id="cText-${q.QueryID}" placeholder="Write a comment...">
+                            <button onclick="submitData('Comments', ${q.QueryID})" style="background:none; border:none; color:var(--fb-blue); cursor:pointer"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('feed-area').innerHTML = html;
+        } catch (e) {
+            document.getElementById('feed-area').innerHTML = "Failed to load data.";
+        }
+    }
+
+    function renderComments(allComments, queryID) {
+        return allComments
+            .filter(c => c.QueryID == queryID)
+            .map(c => `
+                <div class="comment-item">
+                    <div class="comment-bubble">
+                        <b>${c.User}</b><br>${c.Comment}
+                    </div>
+                </div>
+            `).join('');
+    }
+
+    function toggleComments(id) {
+        const section = document.getElementById(`section-${id}`);
+        section.style.display = (section.style.display === 'block') ? 'none' : 'block';
+    }
+
+    async function submitData(type, id = null) {
+        const user = type === 'Queries' ? document.getElementById('qName').value : document.getElementById(`cName-${id}`).value;
+        const text = type === 'Queries' ? document.getElementById('qText').value : document.getElementById(`cText-${id}`).value;
+
+        if(!user || !text) return alert("Please fill both fields");
+
+        const payload = { sheetName: type, user: user, text: text, queryID: id };
+
+        // Optimistic UI: Hide comments while posting to feel faster
+        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+        loadData(); 
+    }
+
+    loadData();
+</script>
+
+</body>
+</html>
