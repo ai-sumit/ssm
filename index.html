@@ -3,225 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Community Feed</title>
+    <title>Community Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
     <style>
-        :root {
-            --fb-bg: #f0f2f5;
-            --fb-blue: #1877f2;
-            --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--fb-bg);
-            margin: 0;
-            padding: 20px;
-            color: #1c1e21;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        /* Create Post Card */
-        .create-post {
-            background: white;
-            padding: 16px;
-            border-radius: 8px;
-            box-shadow: var(--card-shadow);
-            margin-bottom: 20px;
-        }
-
-        .create-post h4 { margin-top: 0; color: #65676b; font-size: 14px; }
-
-        input, textarea {
-            width: 100%;
-            border: 1px solid #dddfe2;
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-            font-size: 15px;
-            background: #f0f2f5;
-        }
-
-        button.main-btn {
-            background-color: var(--fb-blue);
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 10px;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        button.main-btn:hover { background-color: #166fe5; }
-
-        /* Feed Post Card */
-        .post-card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: var(--card-shadow);
-            margin-bottom: 16px;
-            overflow: hidden;
-            animation: slideUp 0.4s ease-out;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .post-header { padding: 12px 16px; display: flex; align-items: center; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; background: #ddd; margin-right: 12px; display:flex; align-items:center; justify-content:center; color: white; background: var(--fb-blue); }
-        .user-info b { display: block; font-size: 15px; }
-        .user-info span { font-size: 12px; color: #65676b; }
-
-        .post-content { padding: 4px 16px 16px 16px; font-size: 16px; line-height: 1.4; }
-
-        /* Action Buttons */
-        .post-actions {
-            border-top: 1px solid #ebedf0;
-            border-bottom: 1px solid #ebedf0;
-            display: flex;
-            padding: 4px;
-        }
-
-        .action-btn {
-            flex: 1;
-            padding: 8px;
-            text-align: center;
-            color: #65676b;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-
+        :root { --fb-bg: #f0f2f5; --fb-blue: #1877f2; --text-sub: #65676b; }
+        body { font-family: 'Inter', sans-serif; background: var(--fb-bg); margin: 0; padding: 15px; }
+        .container { max-width: 550px; margin: 0 auto; }
+        
+        .card { background: white; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .p-4 { padding: 16px; }
+        input, textarea { width: 100%; border: 1px solid #dddfe2; border-radius: 6px; padding: 10px; margin-bottom: 8px; box-sizing: border-box; background: #f0f2f5; outline: none; }
+        
+        .btn-post { background: var(--fb-blue); color: white; border: none; width: 100%; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .post-header { display: flex; align-items: center; margin-bottom: 12px; }
+        .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--fb-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; }
+        .post-img { width: 100%; max-height: 400px; object-fit: contain; background: #f8f8f8; border-top: 1px solid #eee; }
+        
+        .actions { display: flex; border-top: 1px solid #eee; padding: 4px; }
+        .action-btn { flex: 1; text-align: center; padding: 10px; color: var(--text-sub); cursor: pointer; font-weight: 600; font-size: 14px; border-radius: 4px; transition: 0.2s; }
         .action-btn:hover { background: #f2f2f2; }
-        .action-btn i { margin-right: 6px; }
+        .liked { color: var(--fb-blue) !important; }
 
-        /* Comments Section (Hidden by default) */
-        .comment-section {
-            background: #fff;
-            padding: 12px 16px;
-            display: none; /* Hidden */
-            border-top: 1px solid #ebedf0;
-        }
-
-        .comment-item { margin-bottom: 12px; display: flex; align-items: flex-start; }
-        .comment-bubble {
-            background: #f0f2f5;
-            padding: 8px 12px;
-            border-radius: 18px;
-            font-size: 13px;
-            max-width: 85%;
-        }
-
-        .reply-input-group { display: flex; gap: 8px; margin-top: 10px; }
-        .reply-input-group input { margin-bottom: 0; font-size: 13px; border-radius: 20px; }
+        .comment-section { display: none; padding: 12px; background: #fff; border-top: 1px solid #eee; }
+        .comment-item { background: #f0f2f5; padding: 8px 12px; border-radius: 16px; margin-bottom: 6px; font-size: 13px; width: fit-content; max-width: 85%; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="create-post">
-        <h4><i class="fas fa-edit"></i> Share something with the community</h4>
+    <div class="card p-4">
+        <h4 style="margin: 0 0 10px 0">Create Post</h4>
         <input type="text" id="qName" placeholder="Your Name">
         <textarea id="qText" rows="2" placeholder="What's on your mind?"></textarea>
-        <button class="main-btn" onclick="submitData('Queries')">Post</button>
+        <input type="text" id="qLink" placeholder="Paste Image URL (optional)">
+        <button class="btn-post" onclick="submitData('Queries')">Post</button>
     </div>
-
-    <div id="feed-area"></div>
+    <div id="feed"></div>
 </div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzD0ckyJb5DOQ_MB0TRsRsCNDZ4skDOeuG_v9AYfeJ4o24KaMcHfl1eSeBVV6A7Lb8I/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzD0ckyJb5DOQ_MB0TRsRsCNDZ4skDOeuG_v9AYfeJ4o24KaMcHfl1eSeBVV6A7Lb8I/exec"; 
 
     async function loadData() {
-        document.getElementById('feed-area').innerHTML = '<p style="text-align:center">Loading Feed...</p>';
         try {
             const res = await fetch(WEB_APP_URL);
             const data = await res.json();
             let html = "";
 
             data.queries.reverse().forEach(q => {
-                const date = new Date(q.Timestamp).toLocaleDateString();
+                const img = q.PhotoLink ? `<img src="${q.PhotoLink}" class="post-img" onerror="this.style.display='none'">` : "";
                 html += `
-                <div class="post-card">
-                    <div class="post-header">
-                        <div class="avatar">${q.User.charAt(0).toUpperCase()}</div>
-                        <div class="user-info">
-                            <b>${q.User}</b>
-                            <span>${date}</span>
+                <div class="card">
+                    <div class="p-4">
+                        <div class="post-header">
+                            <div class="avatar">${q.User[0].toUpperCase()}</div>
+                            <div><b>${q.User}</b><br><small style="color:grey">${new Date(q.Timestamp).toLocaleDateString()}</small></div>
                         </div>
+                        <div>${q.Text}</div>
                     </div>
-                    <div class="post-content">${q.Text}</div>
-                    
-                    <div class="post-actions">
-                        <div class="action-btn"><i class="far fa-thumbs-up"></i>Like</div>
-                        <div class="action-btn" onclick="toggleComments('${q.QueryID}')">
-                            <i class="far fa-comment"></i>Comment
-                        </div>
-                        <div class="action-btn"><i class="far fa-share-square"></i>Share</div>
+                    ${img}
+                    <div class="actions">
+                        <div class="action-btn" onclick="addLike('${q.QueryID}', this)"><i class="far fa-thumbs-up"></i> Like (${q.Likes || 0})</div>
+                        <div class="action-btn" onclick="toggleComments('${q.QueryID}')"><i class="far fa-comment"></i> Comment</div>
                     </div>
-
-                    <div class="comment-section" id="section-${q.QueryID}">
+                    <div class="comment-section" id="sec-${q.QueryID}">
                         <div id="list-${q.QueryID}">
-                            ${renderComments(data.comments, q.QueryID)}
+                            ${data.comments.filter(c => c.QueryID == q.QueryID).map(c => `<div class="comment-item"><b>${c.User}</b> ${c.Comment}</div>`).join('')}
                         </div>
-                        <div class="reply-input-group">
-                            <input type="text" id="cName-${q.QueryID}" placeholder="Name" style="width:30%">
-                            <input type="text" id="cText-${q.QueryID}" placeholder="Write a comment...">
-                            <button onclick="submitData('Comments', ${q.QueryID})" style="background:none; border:none; color:var(--fb-blue); cursor:pointer"><i class="fas fa-paper-plane"></i></button>
+                        <div style="display:flex; gap:8px; margin-top:10px;">
+                            <input type="text" id="cn-${q.QueryID}" placeholder="Name" style="width:30%; margin:0">
+                            <input type="text" id="ct-${q.QueryID}" placeholder="Write a reply..." style="margin:0">
+                            <button onclick="submitData('Comments', ${q.QueryID})" style="border:none; background:none; color:var(--fb-blue); cursor:pointer"><i class="fa fa-paper-plane"></i></button>
                         </div>
                     </div>
                 </div>`;
             });
-            document.getElementById('feed-area').innerHTML = html;
-        } catch (e) {
-            document.getElementById('feed-area').innerHTML = "Failed to load data.";
-        }
+            document.getElementById('feed').innerHTML = html;
+        } catch(e) { console.error(e); }
     }
 
-    function renderComments(allComments, queryID) {
-        return allComments
-            .filter(c => c.QueryID == queryID)
-            .map(c => `
-                <div class="comment-item">
-                    <div class="comment-bubble">
-                        <b>${c.User}</b><br>${c.Comment}
-                    </div>
-                </div>
-            `).join('');
+    async function addLike(id, btn) {
+        btn.classList.add('liked');
+        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: "like", queryID: id }) });
+        loadData();
     }
 
     function toggleComments(id) {
-        const section = document.getElementById(`section-${id}`);
-        section.style.display = (section.style.display === 'block') ? 'none' : 'block';
+        const el = document.getElementById('sec-' + id);
+        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
     }
 
     async function submitData(type, id = null) {
-        const user = type === 'Queries' ? document.getElementById('qName').value : document.getElementById(`cName-${id}`).value;
-        const text = type === 'Queries' ? document.getElementById('qText').value : document.getElementById(`cText-${id}`).value;
+        const user = type === 'Queries' ? document.getElementById('qName').value : document.getElementById(`cn-${id}`).value;
+        const text = type === 'Queries' ? document.getElementById('qText').value : document.getElementById(`ct-${id}`).value;
+        const photoLink = type === 'Queries' ? document.getElementById('qLink').value : null;
 
-        if(!user || !text) return alert("Please fill both fields");
+        if(!user || !text) return alert("Fill fields!");
 
-        const payload = { sheetName: type, user: user, text: text, queryID: id };
-
-        // Optimistic UI: Hide comments while posting to feel faster
-        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
-        loadData(); 
+        await fetch(WEB_APP_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ sheetName: type, user, text, queryID: id, photoLink, action: "post" }) 
+        });
+        location.reload(); 
     }
 
     loadData();
 </script>
-
 </body>
 </html>
