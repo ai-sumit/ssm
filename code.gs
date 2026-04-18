@@ -10,7 +10,6 @@ function doPost(e) {
   const params = JSON.parse(e.postData.contents);
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
-  // 1. Handle Likes
   if (params.action === "like") {
     const sheet = ss.getSheetByName("Queries");
     const data = sheet.getDataRange().getValues();
@@ -23,31 +22,28 @@ function doPost(e) {
     return ContentService.createTextOutput("Liked");
   }
 
-  // 2. Handle New Posts (With Verification)
   if (params.sheetName === "Queries") {
     const memberSheet = ss.getSheetByName("Members");
     const members = memberSheet.getDataRange().getValues();
-    let userName = "";
+    let userData = null;
     
-    // Check if email exists in Members sheet
+    // Check membership and fetch Profile Info
     for (let i = 1; i < members.length; i++) {
       if (members[i][0].toLowerCase() === params.email.toLowerCase()) {
-        userName = members[i][1]; // Get Name from column 2
+        userData = { name: members[i][1], avatar: members[i][2] }; 
         break;
       }
     }
 
-    if (!userName) {
-      return ContentService.createTextOutput("NOT_MEMBER").setMimeType(ContentService.MimeType.TEXT);
-    }
+    if (!userData) return ContentService.createTextOutput("NOT_MEMBER");
 
+    // Append: ID, Time, Name, Text, PostImage, Likes, UserAvatar
     ss.getSheetByName("Queries").appendRow([
-      new Date().getTime(), new Date(), userName, params.text, params.photoLink || "", 0
+      new Date().getTime(), new Date(), userData.name, params.text, params.photoLink || "", 0, userData.avatar || ""
     ]);
     return ContentService.createTextOutput("SUCCESS");
   }
 
-  // 3. Handle Comments (Open to all)
   if (params.sheetName === "Comments") {
     ss.getSheetByName("Comments").appendRow([params.queryID, new Date(), params.user, params.text]);
     return ContentService.createTextOutput("SUCCESS");
