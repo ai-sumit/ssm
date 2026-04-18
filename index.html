@@ -3,43 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Community Hub</title>
+    <title>CSJournal Community</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --fb-bg: #f0f2f5; --fb-blue: #1877f2; --text-sub: #65676b; }
         body { font-family: 'Inter', sans-serif; background: var(--fb-bg); margin: 0; padding: 15px; }
         .container { max-width: 550px; margin: 0 auto; }
-        
         .card { background: white; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .p-4 { padding: 16px; }
         input, textarea { width: 100%; border: 1px solid #dddfe2; border-radius: 6px; padding: 10px; margin-bottom: 8px; box-sizing: border-box; background: #f0f2f5; outline: none; }
-        
         .btn-post { background: var(--fb-blue); color: white; border: none; width: 100%; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
         .post-header { display: flex; align-items: center; margin-bottom: 12px; }
         .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--fb-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; }
         .post-img { width: 100%; max-height: 400px; object-fit: contain; background: #f8f8f8; border-top: 1px solid #eee; }
-        
         .actions { display: flex; border-top: 1px solid #eee; padding: 4px; }
-        .action-btn { flex: 1; text-align: center; padding: 10px; color: var(--text-sub); cursor: pointer; font-weight: 600; font-size: 14px; border-radius: 4px; transition: 0.2s; }
-        .action-btn:hover { background: #f2f2f2; }
-        .liked { color: var(--fb-blue) !important; }
-
+        .action-btn { flex: 1; text-align: center; padding: 10px; color: var(--text-sub); cursor: pointer; font-weight: 600; font-size: 14px; border-radius: 4px; }
         .comment-section { display: none; padding: 12px; background: #fff; border-top: 1px solid #eee; }
-        .comment-item { background: #f0f2f5; padding: 8px 12px; border-radius: 16px; margin-bottom: 6px; font-size: 13px; width: fit-content; max-width: 85%; }
+        .comment-item { background: #f0f2f5; padding: 8px 12px; border-radius: 16px; margin-bottom: 6px; font-size: 13px; max-width: 85%; }
+        .error-msg { color: #d93025; background: #fce8e6; padding: 10px; border-radius: 6px; margin-bottom: 10px; display: none; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card p-4">
-        <h4 style="margin: 0 0 10px 0">Create Post</h4>
-        <input type="text" id="qName" placeholder="Your Name">
-        <textarea id="qText" rows="2" placeholder="What's on your mind?"></textarea>
-        <input type="text" id="qLink" placeholder="Paste Image URL (optional)">
-        <button class="btn-post" onclick="submitData('Queries')">Post</button>
+        <h4 style="margin: 0 0 10px 0"><i class="fas fa-users"></i> Community Post</h4>
+        <div id="errorBox" class="error-msg"></div>
+        <input type="email" id="qEmail" placeholder="Registered Email ID">
+        <textarea id="qText" rows="2" placeholder="Write your community post..."></textarea>
+        <input type="text" id="qLink" placeholder="Image URL (optional)">
+        <button class="btn-post" onclick="submitPost()">Post as Member</button>
     </div>
     <div id="feed"></div>
 </div>
@@ -48,66 +43,83 @@
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzD0ckyJb5DOQ_MB0TRsRsCNDZ4skDOeuG_v9AYfeJ4o24KaMcHfl1eSeBVV6A7Lb8I/exec"; 
 
     async function loadData() {
-        try {
-            const res = await fetch(WEB_APP_URL);
-            const data = await res.json();
-            let html = "";
+        const res = await fetch(WEB_APP_URL);
+        const data = await res.json();
+        let html = "";
 
-            data.queries.reverse().forEach(q => {
-                const img = q.PhotoLink ? `<img src="${q.PhotoLink}" class="post-img" onerror="this.style.display='none'">` : "";
-                html += `
-                <div class="card">
-                    <div class="p-4">
-                        <div class="post-header">
-                            <div class="avatar">${q.User[0].toUpperCase()}</div>
-                            <div><b>${q.User}</b><br><small style="color:grey">${new Date(q.Timestamp).toLocaleDateString()}</small></div>
-                        </div>
-                        <div>${q.Text}</div>
+        data.queries.reverse().forEach(q => {
+            const img = q.PhotoLink ? `<img src="${q.PhotoLink}" class="post-img" onerror="this.style.display='none'">` : "";
+            html += `
+            <div class="card">
+                <div class="p-4">
+                    <div class="post-header">
+                        <div class="avatar">${q.User[0].toUpperCase()}</div>
+                        <div><b>${q.User}</b><br><small style="color:grey">${new Date(q.Timestamp).toLocaleDateString()}</small></div>
                     </div>
-                    ${img}
-                    <div class="actions">
-                        <div class="action-btn" onclick="addLike('${q.QueryID}', this)"><i class="far fa-thumbs-up"></i> Like (${q.Likes || 0})</div>
-                        <div class="action-btn" onclick="toggleComments('${q.QueryID}')"><i class="far fa-comment"></i> Comment</div>
+                    <div>${q.Text}</div>
+                </div>
+                ${img}
+                <div class="actions">
+                    <div class="action-btn" onclick="addLike('${q.QueryID}')"><i class="far fa-thumbs-up"></i> Like (${q.Likes || 0})</div>
+                    <div class="action-btn" onclick="toggleComments('${q.QueryID}')"><i class="far fa-comment"></i> Comment</div>
+                </div>
+                <div class="comment-section" id="sec-${q.QueryID}">
+                    <div id="list-${q.QueryID}">
+                        ${data.comments.filter(c => c.QueryID == q.QueryID).map(c => `<div class="comment-item"><b>${c.User}</b> ${c.Comment}</div>`).join('')}
                     </div>
-                    <div class="comment-section" id="sec-${q.QueryID}">
-                        <div id="list-${q.QueryID}">
-                            ${data.comments.filter(c => c.QueryID == q.QueryID).map(c => `<div class="comment-item"><b>${c.User}</b> ${c.Comment}</div>`).join('')}
-                        </div>
-                        <div style="display:flex; gap:8px; margin-top:10px;">
-                            <input type="text" id="cn-${q.QueryID}" placeholder="Name" style="width:30%; margin:0">
-                            <input type="text" id="ct-${q.QueryID}" placeholder="Write a reply..." style="margin:0">
-                            <button onclick="submitData('Comments', ${q.QueryID})" style="border:none; background:none; color:var(--fb-blue); cursor:pointer"><i class="fa fa-paper-plane"></i></button>
-                        </div>
+                    <div style="display:flex; gap:8px; margin-top:10px;">
+                        <input type="text" id="cn-${q.QueryID}" placeholder="Your Name" style="width:30%; margin:0">
+                        <input type="text" id="ct-${q.QueryID}" placeholder="Write a reply..." style="margin:0">
+                        <button onclick="submitComment(${q.QueryID})" style="border:none; background:none; color:var(--fb-blue); cursor:pointer"><i class="fa fa-paper-plane"></i></button>
                     </div>
-                </div>`;
-            });
-            document.getElementById('feed').innerHTML = html;
-        } catch(e) { console.error(e); }
+                </div>
+            </div>`;
+        });
+        document.getElementById('feed').innerHTML = html;
     }
 
-    async function addLike(id, btn) {
-        btn.classList.add('liked');
-        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: "like", queryID: id }) });
+    async function submitPost() {
+        const email = document.getElementById('qEmail').value;
+        const text = document.getElementById('qText').value;
+        const photoLink = document.getElementById('qLink').value;
+        const errorBox = document.getElementById('errorBox');
+
+        if(!email || !text) return alert("Email and Text are required!");
+
+        const res = await fetch(WEB_APP_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ sheetName: "Queries", email, text, photoLink }) 
+        });
+        const result = await res.text();
+
+        if (result === "NOT_MEMBER") {
+            errorBox.style.display = "block";
+            errorBox.innerHTML = `You are not a member of this community. Please contact <a href="mailto:mail.csjournal@gmail.com">mail.csjournal@gmail.com</a>`;
+        } else {
+            location.reload();
+        }
+    }
+
+    async function submitComment(queryID) {
+        const user = document.getElementById(`cn-${queryID}`).value;
+        const text = document.getElementById(`ct-${queryID}`).value;
+        if(!user || !text) return alert("Fill fields!");
+
+        await fetch(WEB_APP_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ sheetName: "Comments", user, text, queryID }) 
+        });
+        location.reload();
+    }
+
+    async function addLike(queryID) {
+        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action: "like", queryID }) });
         loadData();
     }
 
     function toggleComments(id) {
         const el = document.getElementById('sec-' + id);
         el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-    }
-
-    async function submitData(type, id = null) {
-        const user = type === 'Queries' ? document.getElementById('qName').value : document.getElementById(`cn-${id}`).value;
-        const text = type === 'Queries' ? document.getElementById('qText').value : document.getElementById(`ct-${id}`).value;
-        const photoLink = type === 'Queries' ? document.getElementById('qLink').value : null;
-
-        if(!user || !text) return alert("Fill fields!");
-
-        await fetch(WEB_APP_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ sheetName: type, user, text, queryID: id, photoLink, action: "post" }) 
-        });
-        location.reload(); 
     }
 
     loadData();
