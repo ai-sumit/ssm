@@ -16,8 +16,11 @@
         input, textarea { width: 100%; border: 1px solid #dddfe2; border-radius: 6px; padding: 10px; margin-bottom: 8px; box-sizing: border-box; background: #f0f2f5; outline: none; }
         .btn-post { background: var(--fb-blue); color: white; border: none; width: 100%; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; }
         .post-header { display: flex; align-items: center; margin-bottom: 12px; }
-        .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--fb-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; }
-        .post-img { width: 100%; max-height: 400px; object-fit: contain; background: #f8f8f8; border-top: 1px solid #eee; }
+        
+        /* New Profile Image Styles */
+        .profile-pic { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px; background: #ddd; }
+        
+        .post-img { width: 100%; max-height: 450px; object-fit: contain; background: #f8f8f8; border-top: 1px solid #eee; }
         .actions { display: flex; border-top: 1px solid #eee; padding: 4px; }
         .action-btn { flex: 1; text-align: center; padding: 10px; color: var(--text-sub); cursor: pointer; font-weight: 600; font-size: 14px; border-radius: 4px; }
         .comment-section { display: none; padding: 12px; background: #fff; border-top: 1px solid #eee; }
@@ -29,12 +32,12 @@
 
 <div class="container">
     <div class="card p-4">
-        <h4 style="margin: 0 0 10px 0"><i class="fas fa-users"></i> Community Post</h4>
+        <h4 style="margin: 0 0 10px 0"><i class="fas fa-users"></i> Member Post</h4>
         <div id="errorBox" class="error-msg"></div>
-        <input type="email" id="qEmail" placeholder="Registered Email ID">
-        <textarea id="qText" rows="2" placeholder="Write your community post..."></textarea>
-        <input type="text" id="qLink" placeholder="Image URL (optional)">
-        <button class="btn-post" onclick="submitPost()">Post as Member</button>
+        <input type="email" id="qEmail" placeholder="Enter your registered Email ID">
+        <textarea id="qText" rows="2" placeholder="What's the update?"></textarea>
+        <input type="text" id="qLink" placeholder="Image URL for post (optional)">
+        <button class="btn-post" onclick="submitPost()">Submit Post</button>
     </div>
     <div id="feed"></div>
 </div>
@@ -48,17 +51,20 @@
         let html = "";
 
         data.queries.reverse().forEach(q => {
-            const img = q.PhotoLink ? `<img src="${q.PhotoLink}" class="post-img" onerror="this.style.display='none'">` : "";
+            const postImg = q.PhotoLink ? `<img src="${q.PhotoLink}" class="post-img" onerror="this.style.display='none'">` : "";
+            // Profile image logic: Use user image or default icon
+            const userAvatar = q.UserAvatar ? q.UserAvatar : "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+            
             html += `
             <div class="card">
                 <div class="p-4">
                     <div class="post-header">
-                        <div class="avatar">${q.User[0].toUpperCase()}</div>
+                        <img src="${userAvatar}" class="profile-pic" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
                         <div><b>${q.User}</b><br><small style="color:grey">${new Date(q.Timestamp).toLocaleDateString()}</small></div>
                     </div>
-                    <div>${q.Text}</div>
+                    <div style="font-size:15px; line-height:1.5;">${q.Text}</div>
                 </div>
-                ${img}
+                ${postImg}
                 <div class="actions">
                     <div class="action-btn" onclick="addLike('${q.QueryID}')"><i class="far fa-thumbs-up"></i> Like (${q.Likes || 0})</div>
                     <div class="action-btn" onclick="toggleComments('${q.QueryID}')"><i class="far fa-comment"></i> Comment</div>
@@ -82,9 +88,7 @@
         const email = document.getElementById('qEmail').value;
         const text = document.getElementById('qText').value;
         const photoLink = document.getElementById('qLink').value;
-        const errorBox = document.getElementById('errorBox');
-
-        if(!email || !text) return alert("Email and Text are required!");
+        if(!email || !text) return alert("Please enter email and text");
 
         const res = await fetch(WEB_APP_URL, { 
             method: 'POST', 
@@ -93,8 +97,9 @@
         const result = await res.text();
 
         if (result === "NOT_MEMBER") {
+            const errorBox = document.getElementById('errorBox');
             errorBox.style.display = "block";
-            errorBox.innerHTML = `You are not a member of this community. Please contact <a href="mailto:mail.csjournal@gmail.com">mail.csjournal@gmail.com</a>`;
+            errorBox.innerHTML = `Not a member. Contact <a href="mailto:mail.csjournal@gmail.com">mail.csjournal@gmail.com</a>`;
         } else {
             location.reload();
         }
@@ -103,12 +108,8 @@
     async function submitComment(queryID) {
         const user = document.getElementById(`cn-${queryID}`).value;
         const text = document.getElementById(`ct-${queryID}`).value;
-        if(!user || !text) return alert("Fill fields!");
-
-        await fetch(WEB_APP_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ sheetName: "Comments", user, text, queryID }) 
-        });
+        if(!user || !text) return;
+        await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ sheetName: "Comments", user, text, queryID }) });
         location.reload();
     }
 
